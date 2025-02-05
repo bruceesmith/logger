@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bruceesmith/echidna/set"
+	"github.com/bruceesmith/set"
 )
 
 func TestDebug(t *testing.T) {

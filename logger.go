@@ -19,11 +19,6 @@ respectively.
 When used in [cli applications], a cli.Flag representing a LogLevel can be provided using the LogLevelFlag type.
 
 [cli applications]: https://github.com/urfave/cli
-
-[badge]: https://pkg.go.dev/badge/github.com/bruceesmith/logger/v3.svg
-[goreportcard_badge]: https://goreportcard.com/badge/github.com/bruceesmith/logger
-[goreportcard_link]: https://goreportcard.com/report/github.com/bruceesmith/logger
-[goreference_link]: https://pkg.go.dev/github.com/bruceesmith/logger
 */
 package logger
 
@@ -38,7 +33,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bruceesmith/echidna/set"
+	"github.com/bruceesmith/set"
 )
 
 // Format determines the format of each log entry
