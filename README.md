@@ -8,6 +8,8 @@ import "github.com/bruceesmith/logger"
 
 Package logger supports logging and tracing based on the standard library package [log/slog](<https://pkg.go.dev/log/slog/>).
 
+\[\!\[Go Reference\][goreference\\\_badge](<https://pkg.go.dev/badge/github.com/bruceesmith/logger/v3.svg>)\][goreference\\\_link](<https://pkg.go.dev/github.com/bruceesmith/logger>) \[\!\[Go Report Card\][goreportcard\\\_badge](<https://goreportcard.com/badge/github.com/bruceesmith/logger>)\][goreportcard\\\_link](<https://goreportcard.com/report/github.com/bruceesmith/logger>)
+
 Debug, Error, Info and Warn operate like their package slog equivalents, with the level of logging modifiable using SetLevel.
 
 A custom logging level \(LevelTrace\) can be supplied to SetLevel to enable tracing. Tracing can be unconditional when calling Trace, or only enabled for pre\-defined identifiers when calling TraceID. Identifiers for TraceID are registered by calling SetTraceIDs.

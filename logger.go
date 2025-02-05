@@ -5,6 +5,9 @@
 /*
 Package logger supports logging and tracing based on the standard library package [log/slog].
 
+[![Go Reference][goreference_badge]][goreference_link]
+[![Go Report Card][goreportcard_badge]][goreportcard_link]
+
 Debug, Error, Info and Warn operate like their package slog equivalents, with the level of logging modifiable
 using SetLevel.
 
@@ -19,6 +22,10 @@ respectively.
 When used in [cli applications], a cli.Flag representing a LogLevel can be provided using the LogLevelFlag type.
 
 [cli applications]: https://github.com/urfave/cli
+[goreference_badge]: https://pkg.go.dev/badge/github.com/bruceesmith/logger/v3.svg
+[goreference_link]: https://pkg.go.dev/github.com/bruceesmith/logger
+[goreportcard_badge]: https://goreportcard.com/badge/github.com/bruceesmith/logger
+[goreportcard_link]: https://goreportcard.com/report/github.com/bruceesmith/logger
 */
 package logger
 
