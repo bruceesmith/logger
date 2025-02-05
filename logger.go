@@ -5,8 +5,8 @@
 /*
 Package logger supports logging and tracing based on the standard library package [log/slog].
 
-[![Go Reference][goreference_badge]][goreference_link]
-[![Go Report Card][goreportcard_badge]][goreportcard_link]
+[goreference_badge][goreference_link]
+[goreportcard_badge][goreportcard_link]
 
 Debug, Error, Info and Warn operate like their package slog equivalents, with the level of logging modifiable
 using SetLevel.
