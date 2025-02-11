@@ -12,9 +12,11 @@ A custom logging level (LevelTrace) can be supplied to SetLevel to enable tracin
 be unconditional when calling Trace, or only enabled for pre-defined identifiers when calling TraceID. Identifiers
 for TraceID are registered by calling SetTraceIDs.
 
-By default, all debug, error, info and warn messages go to
-Stdout, and traces go to Stderr; these destinations can be changed by calling RedirectNormal and RedirectTrace
-respectively.
+By default, all debug, error, info and warn messages go to Stdout, and traces go to Stderr; these destinations
+can be changed by calling RedirectNormal and RedirectTrace respectively.
+
+A number of settings can be changed for one or both of the normal (non-trace) and trace loggers by calling
+[Configure] - the format of log records, their destination, and whether each record contains a timestamp.
 
 When used in [cli applications], a cli.Flag representing a LogLevel can be provided using the LogLevelFlag type.
 
@@ -28,66 +30,63 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"os"
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/bruceesmith/set"
 )
 
-// Format determines the format of each log entry
-type Format string
-
-const (
-	// LevelTrace can be set to enable tracing
-	LevelTrace slog.Level = -10
-	// Text format
-	Text Format = "text"
-	// JSON format
-	JSON Format = "json"
-)
-
-var (
-	format       Format
-	level        slog.LevelVar
-	traceIds     *set.Set[string]
-	trace        *slog.Logger
-	normalWriter io.Writer
-	traceWriter  io.Writer
-)
-
-func init() {
-	format = Text
-	level.Set(slog.LevelInfo)
-	normalWriter, traceWriter = os.Stdout, os.Stdout
-	slog.SetDefault(
-		slog.New(
-			textHandler(normalWriter),
-		),
-	)
-	traceIds = set.New[string]()
-	trace = slog.New(
-		textHandler(traceWriter),
-	)
-}
-
+// jsonHandler returns a JSONHandler configured per the config settings
 func jsonHandler(w io.Writer, trace bool) slog.Handler {
 	return slog.NewJSONHandler(
 		w,
 		&slog.HandlerOptions{
-			AddSource: trace,
-			Level:     &level,
+			AddSource:   trace,
+			Level:       &level,
+			ReplaceAttr: replacer(trace),
 		},
 	)
 }
-func textHandler(w io.Writer) slog.Handler {
+
+// levelAttr replaces custom log levels with their String name in log records
+func levelAttr(a slog.Attr) slog.Attr {
+	if a.Key == slog.LevelKey {
+		level, ok := a.Value.Any().(slog.Level)
+		if ok {
+			loglevel := LogLevel(level)
+			a.Value = slog.StringValue((&loglevel).String())
+		}
+	}
+	return a
+}
+
+// replcer returns a function used as ReplaceAttr in loggers
+func replacer(trace bool) func(_ []string, a slog.Attr) slog.Attr {
+	return func(_ []string, a slog.Attr) slog.Attr {
+		a = levelAttr(a)
+		a = timeAttr(a, trace)
+		return a
+	}
+}
+
+// textHandler returns a TextNHandler configured per the config settings
+func textHandler(w io.Writer, trace bool) slog.Handler {
 	return slog.NewTextHandler(
 		w,
 		&slog.HandlerOptions{
-			Level: &level,
+			Level:       &level,
+			ReplaceAttr: replacer(trace),
 		},
 	)
+}
+
+// timeAttr removes the "Time" fragment from a log record if so configured
+func timeAttr(a slog.Attr, trace bool) slog.Attr {
+	if a.Key == slog.TimeKey &&
+		((trace && config.Trace.OmitTime) ||
+			(!trace && config.Normal.OmitTime)) {
+		return slog.Attr{}
+	}
+	return a
 }
 
 // Debug emits a debug log
@@ -105,45 +104,41 @@ func Info(msg string, args ...any) {
 	slog.Info(msg, args...)
 }
 
+// Level returns the current logging level as a string
 func Level() string {
 	return level.Level().String()
 }
 
-// RedirectStandard changes the destination for normal (non-trace) logs
+// RedirectStandard changes the destination for normal (non-trace) logsDestinationSetting argument
+//
+// Deprecated: RedirectStandard() should be replaced by a call to Configure()
+// with a DestinationSetting argument
 func RedirectStandard(w io.Writer) {
-	normalWriter = w
-	switch format {
-	case JSON:
-		slog.SetDefault(slog.New(jsonHandler(w, false)))
-	case Text:
-		slog.SetDefault(slog.New(textHandler(w)))
-	}
+	normalDestination(w)
 }
 
 // RedirectTrace changes the destination for normal (non-trace) logs
+//
+// Deprecated: RedirectTrace() should be replaced by a call to Configure()
+// with a DestinationSetting argument
 func RedirectTrace(w io.Writer) {
-	traceWriter = w
-	switch format {
-	case JSON:
-		trace = slog.New(jsonHandler(w, true))
-	case Text:
-		trace = slog.New(textHandler(w))
-	}
+	traceDestination(w)
 }
 
 // SetFormat changes the format of log entries
+//
+// Deprecated: SetFormat() should be replaced by calls to Configure() with a
+// FormatSetting argument. An advantage of Configure() is that the format of
+// the standard logger can be configured differently to that of the Trace logger
 func SetFormat(f Format) {
-	switch strings.ToLower(string(f)) {
-	case "json":
-		format = JSON
-		slog.SetDefault(slog.New(jsonHandler(normalWriter, false)))
-		trace = slog.New(jsonHandler(traceWriter, true))
-	case "text":
-		format = Text
-		slog.SetDefault(slog.New(textHandler(normalWriter)))
-		trace = slog.New(textHandler(traceWriter))
-	}
+	normalFormat(f)
+	traceFormat(f)
 }
+
+const (
+	// LevelTrace can be set to enable tracing
+	LevelTrace slog.Level = -10
+)
 
 // SetLevel sets the default level of logging
 func SetLevel(l slog.Level) {
@@ -153,7 +148,7 @@ func SetLevel(l slog.Level) {
 // SetTraceIds registers identifiers for future tracing
 func SetTraceIds(ids ...string) {
 	for _, id := range ids {
-		traceIds.Add(strings.ToLower(id))
+		config.traceIds.Add(strings.ToLower(id))
 	}
 }
 
@@ -164,18 +159,18 @@ func Trace(msg string, args ...any) {
 		runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
 		r := slog.NewRecord(time.Now(), LevelTrace, msg, pcs[0])
 		r.Add(args...)
-		_ = trace.Handler().Handle(context.Background(), r)
+		_ = config.traceLogger.Handler().Handle(context.Background(), r)
 	}
 }
 
 // TraceID emits one JSON-formatted log entry if tracing is enabled for the requested ID
 func TraceID(id string, msg string, args ...any) {
-	if level.Level() == LevelTrace && (traceIds.Contains(strings.ToLower(id)) || traceIds.Contains("all")) {
+	if level.Level() == LevelTrace && (config.traceIds.Contains(strings.ToLower(id)) || config.traceIds.Contains("all")) {
 		var pcs [1]uintptr
 		runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
 		r := slog.NewRecord(time.Now(), LevelTrace, msg, pcs[0])
 		r.Add(args...)
-		_ = trace.Handler().Handle(context.Background(), r)
+		_ = config.traceLogger.Handler().Handle(context.Background(), r)
 	}
 }
 

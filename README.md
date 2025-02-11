@@ -17,10 +17,14 @@ A custom logging level \(LevelTrace\) can be supplied to SetLevel to enable trac
 
 By default, all debug, error, info and warn messages go to Stdout, and traces go to Stderr; these destinations can be changed by calling RedirectNormal and RedirectTrace respectively.
 
+A number of settings can be changed for one or both of the normal \(non\-trace\) and trace loggers by calling [Configure](<#Configure>) \- the format of log records, their destination, and whether each record contains a timestamp.
+
 When used in [cli applications](<https://github.com/urfave/cli>), a cli.Flag representing a LogLevel can be provided using the LogLevelFlag type.
 
 ## Index
 
+- [Constants](<#constants>)
+- [func Configure\(setting ...ConfigSetting\) error](<#Configure>)
 - [func Debug\(msg string, args ...any\)](<#Debug>)
 - [func Error\(msg string, args ...any\)](<#Error>)
 - [func Info\(msg string, args ...any\)](<#Info>)
@@ -33,18 +37,43 @@ When used in [cli applications](<https://github.com/urfave/cli>), a cli.Flag rep
 - [func Trace\(msg string, args ...any\)](<#Trace>)
 - [func TraceID\(id string, msg string, args ...any\)](<#TraceID>)
 - [func Warn\(msg string, args ...any\)](<#Warn>)
+- [type ConfigSetting](<#ConfigSetting>)
 - [type Format](<#Format>)
+- [type LogID](<#LogID>)
+  - [func \(i LogID\) String\(\) string](<#LogID.String>)
 - [type LogLevel](<#LogLevel>)
   - [func \(ll \*LogLevel\) Set\(ls string\) \(err error\)](<#LogLevel.Set>)
   - [func \(ll \*LogLevel\) String\(\) \(s string\)](<#LogLevel.String>)
   - [func \(ll \*LogLevel\) Type\(\) string](<#LogLevel.Type>)
   - [func \(ll \*LogLevel\) UnmarshalJSON\(jason \[\]byte\) \(err error\)](<#LogLevel.UnmarshalJSON>)
 - [type LogLevelFlag](<#LogLevelFlag>)
+- [type SettingKey](<#SettingKey>)
+  - [func \(i SettingKey\) String\(\) string](<#SettingKey.String>)
 - [type Traces](<#Traces>)
   - [func \(t \*Traces\) Set\(ts string\) \(err error\)](<#Traces.Set>)
   - [func \(t \*Traces\) String\(\) \(s string\)](<#Traces.String>)
   - [func \(t \*Traces\) Type\(\) string](<#Traces.Type>)
 
+
+## Constants
+
+<a name="LevelTrace"></a>
+
+```go
+const (
+    // LevelTrace can be set to enable tracing
+    LevelTrace slog.Level = -10
+)
+```
+
+<a name="Configure"></a>
+## func Configure
+
+```go
+func Configure(setting ...ConfigSetting) error
+```
+
+Configure sets or changes attributes of either the normal or trace loggers
 
 <a name="Debug"></a>
 ## func Debug
@@ -80,7 +109,7 @@ Info emits an info log
 func Level() string
 ```
 
-
+Level returns the current logging level as a string
 
 <a name="RedirectStandard"></a>
 ## func RedirectStandard
@@ -89,7 +118,9 @@ func Level() string
 func RedirectStandard(w io.Writer)
 ```
 
-RedirectStandard changes the destination for normal \(non\-trace\) logs
+RedirectStandard changes the destination for normal \(non\-trace\) logsDestinationSetting argument
+
+Deprecated: RedirectStandard\(\) should be replaced by a call to Configure\(\) with a DestinationSetting argument
 
 <a name="RedirectTrace"></a>
 ## func RedirectTrace
@@ -100,6 +131,8 @@ func RedirectTrace(w io.Writer)
 
 RedirectTrace changes the destination for normal \(non\-trace\) logs
 
+Deprecated: RedirectTrace\(\) should be replaced by a call to Configure\(\) with a DestinationSetting argument
+
 <a name="SetFormat"></a>
 ## func SetFormat
 
@@ -108,6 +141,8 @@ func SetFormat(f Format)
 ```
 
 SetFormat changes the format of log entries
+
+Deprecated: SetFormat\(\) should be replaced by calls to Configure\(\) with a FormatSetting argument. An advantage of Configure\(\) is that the format of the standard logger can be configured differently to that of the Trace logger
 
 <a name="SetLevel"></a>
 ## func SetLevel
@@ -154,6 +189,19 @@ func Warn(msg string, args ...any)
 
 Warn emits a warning log
 
+<a name="ConfigSetting"></a>
+## type ConfigSetting
+
+ConfigSetting is an argument to Configure\(\)
+
+```go
+type ConfigSetting struct {
+    AppliesTo LogID      // Logger whose setting is set/changed
+    Key       SettingKey // Attribute of the logger that is srt/changed
+    Value     any        // New value for this attribute
+}
+```
+
 <a name="Format"></a>
 ## type Format
 
@@ -163,18 +211,41 @@ Format determines the format of each log entry
 type Format string
 ```
 
-<a name="LevelTrace"></a>
+<a name="Text"></a>
 
 ```go
 const (
-    // LevelTrace can be set to enable tracing
-    LevelTrace slog.Level = -10
-    // Text format
-    Text Format = "text"
-    // JSON format
-    JSON Format = "json"
+    Text Format = "text" // Text format logs
+    JSON Format = "json" // JSON format logs
 )
 ```
+
+<a name="LogID"></a>
+## type LogID
+
+LogID defines the identifier of a logger
+
+```go
+type LogID int
+```
+
+<a name="Norm"></a>
+
+```go
+const (
+    Norm  LogID = iota // The normal logger
+    Tracy              // The trace logger
+)
+```
+
+<a name="LogID.String"></a>
+### func \(LogID\) String
+
+```go
+func (i LogID) String() string
+```
+
+
 
 <a name="LogLevel"></a>
 ## type LogLevel
@@ -229,6 +300,34 @@ LogLevelFlag is useful for using a LogLevel as a command\-line flag in CLI appli
 ```go
 type LogLevelFlag = cli.FlagBase[LogLevel, cli.NoConfig, logLevelValue]
 ```
+
+<a name="SettingKey"></a>
+## type SettingKey
+
+SettingKey defines a logger setting that can be set or changed via the Configure function
+
+```go
+type SettingKey int
+```
+
+<a name="DestinationSetting"></a>
+
+```go
+const (
+    DestinationSetting SettingKey = iota // Output writer / destination for a logger
+    FormatSetting                        // Format of log entries
+    OmitTimeSetting                      // Whether a timestamp is included in log entries
+)
+```
+
+<a name="SettingKey.String"></a>
+### func \(SettingKey\) String
+
+```go
+func (i SettingKey) String() string
+```
+
+
 
 <a name="Traces"></a>
 ## type Traces

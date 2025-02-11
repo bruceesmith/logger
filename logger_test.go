@@ -7,9 +7,11 @@ package logger
 import (
 	"bytes"
 	"log/slog"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/bruceesmith/set"
 )
@@ -226,6 +228,51 @@ func TestLevel(t *testing.T) {
 	}
 }
 
+func Test_levelAttr(t *testing.T) {
+	type args struct {
+		a slog.Attr
+	}
+	tests := []struct {
+		name string
+		args args
+		want slog.Attr
+	}{
+		{
+			name: "level",
+			args: args{
+				slog.Attr{
+					Key:   "level",
+					Value: slog.AnyValue(slog.Level(LevelTrace)),
+				},
+			},
+			want: slog.Attr{
+				Key:   "level",
+				Value: slog.StringValue("TRACE"),
+			},
+		},
+		{
+			name: "not-level",
+			args: args{
+				slog.Attr{
+					Key:   "something",
+					Value: slog.StringValue("else"),
+				},
+			},
+			want: slog.Attr{
+				Key:   "something",
+				Value: slog.StringValue("else"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := levelAttr(tt.args.a); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("levelAttr() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestRedirectStandard(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -241,8 +288,9 @@ func TestRedirectStandard(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		save := config
 		t.Run(tt.name, func(t *testing.T) {
-			format = tt.format
+			config.Normal.Format = tt.format
 			w := &bytes.Buffer{}
 			before := slog.Default()
 			RedirectStandard(w)
@@ -251,6 +299,7 @@ func TestRedirectStandard(t *testing.T) {
 				t.Errorf("RedirectStandard() before = %v, after = %v", before, after)
 			}
 		})
+		config = save
 	}
 }
 
@@ -269,14 +318,65 @@ func TestRedirectTrace(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		save := config
 		t.Run(tt.name, func(t *testing.T) {
-			format = tt.format
+			config.Trace.Format = tt.format
 			w := &bytes.Buffer{}
-			before := *trace
+			before := *config.traceLogger
 			RedirectTrace(w)
-			after := *trace
+			after := *config.traceLogger
 			if before == after {
 				t.Errorf("RedirectTrace() before = %v, after = %v", before, after)
+			}
+		})
+		config = save
+	}
+}
+
+func Test_replacer(t *testing.T) {
+	type args struct {
+		attr  slog.Attr
+		trace bool
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wantK string
+		wantV slog.Value
+	}{
+		{
+			name: "trace",
+			args: args{
+				attr: slog.Attr{
+					Key:   "level",
+					Value: slog.AnyValue(slog.Level(LevelTrace)),
+				},
+
+				trace: true,
+			},
+			wantK: "level",
+			wantV: slog.StringValue("TRACE"),
+		},
+		{
+			name: "not-trace",
+			args: args{
+				attr: slog.Attr{
+					Key:   "str",
+					Value: slog.StringValue("str"),
+				},
+
+				trace: false,
+			},
+			wantK: "str",
+			wantV: slog.StringValue("str"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotF := replacer(tt.args.trace)
+			got := gotF([]string{}, tt.args.attr)
+			if got.Key != tt.wantK || got.Value.String() != tt.wantV.String() {
+				t.Errorf("replacer() = unexpected")
 			}
 		})
 	}
@@ -341,6 +441,105 @@ func TestSetLevel(t *testing.T) {
 	}
 }
 
+func Test_timeAttr(t *testing.T) {
+	type args struct {
+		a      slog.Attr
+		trace  bool
+		notime bool
+	}
+	tim := time.Now()
+	tests := []struct {
+		name string
+		args args
+		want slog.Attr
+	}{
+		{
+			name: "time-not-brief",
+			args: args{
+				a: slog.Attr{
+					Key:   "time",
+					Value: slog.TimeValue(tim),
+				},
+				trace:  false,
+				notime: false,
+			},
+			want: slog.Attr{
+				Key:   "time",
+				Value: slog.TimeValue(tim),
+			},
+		},
+		{
+			name: "time-brief",
+			args: args{
+				a: slog.Attr{
+					Key:   "time",
+					Value: slog.TimeValue(tim),
+				},
+				trace:  false,
+				notime: true,
+			},
+			want: slog.Attr{},
+		},
+		{
+			name: "time-not-brief-trace",
+			args: args{
+				a: slog.Attr{
+					Key:   "time",
+					Value: slog.TimeValue(tim),
+				},
+				trace:  true,
+				notime: false,
+			},
+			want: slog.Attr{
+				Key:   "time",
+				Value: slog.TimeValue(tim),
+			},
+		},
+		{
+			name: "time-brief-trace",
+			args: args{
+				a: slog.Attr{
+					Key:   "time",
+					Value: slog.TimeValue(tim),
+				},
+				trace:  true,
+				notime: true,
+			},
+			want: slog.Attr{},
+		},
+		{
+			name: "not-time",
+			args: args{
+				a: slog.Attr{
+					Key:   "something",
+					Value: slog.StringValue("ssss"),
+				},
+				trace:  false,
+				notime: false,
+			},
+			want: slog.Attr{
+				Key:   "something",
+				Value: slog.StringValue("ssss"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		save := config
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.args.trace {
+				config.Trace.OmitTime = tt.args.notime
+			} else {
+				config.Normal.OmitTime = tt.args.notime
+			}
+			if got := timeAttr(tt.args.a, tt.args.trace); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("timeAttr() = %v, want %v", got, tt.want)
+			}
+
+		})
+		config = save
+	}
+}
+
 func TestSetTraceIds(t *testing.T) {
 	type args struct {
 		ids []string
@@ -363,14 +562,16 @@ func TestSetTraceIds(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		save := config
 		t.Run(tt.name, func(t *testing.T) {
 			SetTraceIds(tt.args.ids...)
 			for _, id := range tt.args.ids {
-				if !traceIds.Contains(strings.ToLower(id)) {
+				if !config.traceIds.Contains(strings.ToLower(id)) {
 					t.Errorf("SetTraceIds %s is not in traceIds", id)
 				}
 			}
 		})
+		config = save
 	}
 }
 
@@ -407,7 +608,7 @@ func TestTrace(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			SetLevel(tt.level)
 			w := &bytes.Buffer{}
-			trace =
+			config.traceLogger =
 				slog.New(
 					slog.NewJSONHandler(
 						w,
@@ -485,10 +686,11 @@ func TestTraceID(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		save := config
 		t.Run(tt.name, func(t *testing.T) {
 			w := &bytes.Buffer{}
 			SetLevel(tt.level)
-			trace =
+			config.traceLogger =
 				slog.New(
 					slog.NewJSONHandler(
 						w,
@@ -497,7 +699,7 @@ func TestTraceID(t *testing.T) {
 						},
 					),
 				)
-			traceIds = tt.args.ids
+			config.traceIds = tt.args.ids
 			TraceID(tt.id, tt.args.msg, tt.args.args...)
 			s := w.String()
 			ok, err := regexp.MatchString(tt.wantRe, s)
@@ -505,6 +707,7 @@ func TestTraceID(t *testing.T) {
 				t.Errorf("Trace() got %s want %s error %s", s, tt.wantRe, err)
 			}
 		})
+		config = save
 	}
 }
 
