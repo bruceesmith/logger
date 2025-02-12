@@ -12,12 +12,14 @@ import (
 //go:generate go run golang.org/x/tools/cmd/stringer@latest -type LogID
 //go:generate go run golang.org/x/tools/cmd/stringer@latest -type SettingKey
 
+// loggerConfig is the modifiable settings of a logger
 type loggerConfig struct {
 	Destination io.Writer
 	Format      Format
 	OmitTime    bool
 }
 
+// configuration of this package
 type configuration struct {
 	Normal      loggerConfig
 	Trace       loggerConfig
