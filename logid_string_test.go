@@ -12,17 +12,17 @@ func TestLogID_String(t *testing.T) {
 	}{
 		{
 			name: "norm",
-			i: Norm,
+			i:    Norm,
 			want: "Norm",
 		},
 		{
 			name: "tracy",
-			i: Tracy,
+			i:    Tracy,
 			want: "Tracy",
 		},
 		{
 			name: "whatthe",
-			i: 77,
+			i:    77,
 			want: "LogID(77)",
 		},
 	}

@@ -12,22 +12,22 @@ func TestSettingKey_String(t *testing.T) {
 	}{
 		{
 			name: "destination",
-			i: DestinationSetting,
+			i:    DestinationSetting,
 			want: "DestinationSetting",
 		},
 		{
 			name: "format",
-			i: FormatSetting,
+			i:    FormatSetting,
 			want: "FormatSetting",
 		},
 		{
 			name: "omittime",
-			i: OmitTimeSetting,
+			i:    OmitTimeSetting,
 			want: "OmitTimeSetting",
 		},
 		{
 			name: "whatthe",
-			i: 99,
+			i:    99,
 			want: "SettingKey(99)",
 		},
 	}
