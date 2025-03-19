@@ -148,7 +148,7 @@ func SetLevel(l slog.Level) {
 // SetTraceIds registers identifiers for future tracing
 func SetTraceIds(ids ...string) {
 	for _, id := range ids {
-		config.traceIds.Add(strings.ToLower(id))
+		_ = config.traceIds.Add(strings.ToLower(id))
 	}
 }
 

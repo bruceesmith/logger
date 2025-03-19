@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bruceesmith/set"
+	set "github.com/deckarep/golang-set/v2"
 )
 
 func TestDebug(t *testing.T) {
@@ -631,7 +631,7 @@ func TestTraceID(t *testing.T) {
 	type args struct {
 		msg  string
 		args []any
-		ids  *set.Set[string]
+		ids  set.Set[string]
 	}
 	tests := []struct {
 		name   string
@@ -645,7 +645,7 @@ func TestTraceID(t *testing.T) {
 			args: args{
 				msg:  "trace",
 				args: []any{"one", 1},
-				ids:  set.New[string]("m1", "m2"),
+				ids:  set.NewSet("m1", "m2"),
 			},
 			level:  LevelTrace,
 			id:     "m3",
@@ -656,7 +656,7 @@ func TestTraceID(t *testing.T) {
 			args: args{
 				msg:  "trace",
 				args: []any{"one", 1},
-				ids:  set.New[string]("m1", "m2"),
+				ids:  set.NewSet("m1", "m2"),
 			},
 			level:  LevelTrace,
 			id:     "m1",
@@ -667,7 +667,7 @@ func TestTraceID(t *testing.T) {
 			args: args{
 				msg:  "trace",
 				args: []any{"one", 1},
-				ids:  set.New[string]("m1", "m2"),
+				ids:  set.NewSet("m1", "m2"),
 			},
 			level:  slog.LevelInfo,
 			id:     "m1",
@@ -678,7 +678,7 @@ func TestTraceID(t *testing.T) {
 			args: args{
 				msg:  "trace",
 				args: []any{"one", 1},
-				ids:  set.New[string]("all"),
+				ids:  set.NewSet("all"),
 			},
 			level:  LevelTrace,
 			id:     "m1",

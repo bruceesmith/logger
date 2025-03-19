@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/bruceesmith/set"
+	set "github.com/deckarep/golang-set/v2"
 )
 
-//go:generate go run golang.org/x/tools/cmd/stringer@latest -type LogID
-//go:generate go run golang.org/x/tools/cmd/stringer@latest -type SettingKey
+//go:generate go tool stringer -type LogID
+//go:generate go tool stringer -type SettingKey
 
 // loggerConfig is the modifiable settings of a logger
 type loggerConfig struct {
@@ -23,7 +23,7 @@ type loggerConfig struct {
 type configuration struct {
 	Normal      loggerConfig
 	Trace       loggerConfig
-	traceIds    *set.Set[string]
+	traceIds    set.Set[string]
 	traceLogger *slog.Logger
 }
 
@@ -79,7 +79,7 @@ func init() {
 			Format:      Text,
 			OmitTime:    false,
 		},
-		traceIds: set.New[string](),
+		traceIds: set.NewSet[string](),
 		traceLogger: slog.New(
 			textHandler(defaultTraceDestination, true),
 		),
