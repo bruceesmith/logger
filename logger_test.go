@@ -711,6 +711,42 @@ func TestTraceID(t *testing.T) {
 	}
 }
 
+func TestTraceIDs(t *testing.T) {
+	type args struct {
+		ids set.Set[string]
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "empty",
+			args: args{
+				ids: set.NewSet[string](),
+			},
+			want: []string{},
+		},
+		{
+			name: "one",
+			args: args{
+				ids: set.NewSet("one"),
+			},
+			want: []string{"one"},
+		},
+	}
+	for _, tt := range tests {
+		save := config
+		config.traceIds = tt.args.ids
+		t.Run(tt.name, func(t *testing.T) {
+			if got := TraceIDs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TraceIDs() = %v, want %v", got, tt.want)
+			}
+		})
+		config = save
+	}
+}
+
 func TestWarn(t *testing.T) {
 	type args struct {
 		msg  string

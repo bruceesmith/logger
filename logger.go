@@ -174,6 +174,11 @@ func TraceID(id string, msg string, args ...any) {
 	}
 }
 
+// TraceIDs returns the list of enabled trace IDs
+func TraceIDs() []string {
+	return config.traceIds.ToSlice()
+}
+
 // Warn emits a warning log
 func Warn(msg string, args ...any) {
 	slog.Warn(msg, args...)

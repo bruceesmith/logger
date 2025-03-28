@@ -36,6 +36,7 @@ When used in [cli applications](<https://github.com/urfave/cli>), a cli.Flag rep
 - [func SetTraceIds\(ids ...string\)](<#SetTraceIds>)
 - [func Trace\(msg string, args ...any\)](<#Trace>)
 - [func TraceID\(id string, msg string, args ...any\)](<#TraceID>)
+- [func TraceIDs\(\) \[\]string](<#TraceIDs>)
 - [func Warn\(msg string, args ...any\)](<#Warn>)
 - [type ConfigSetting](<#ConfigSetting>)
 - [type Format](<#Format>)
@@ -179,6 +180,15 @@ func TraceID(id string, msg string, args ...any)
 ```
 
 TraceID emits one JSON\-formatted log entry if tracing is enabled for the requested ID
+
+<a name="TraceIDs"></a>
+## func TraceIDs
+
+```go
+func TraceIDs() []string
+```
+
+TraceIDs returns the list of enabled trace IDs
 
 <a name="Warn"></a>
 ## func Warn
