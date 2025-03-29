@@ -106,7 +106,8 @@ func Info(msg string, args ...any) {
 
 // Level returns the current logging level as a string
 func Level() string {
-	return level.Level().String()
+	ll := LogLevel(level.Level())
+	return (&ll).String()
 }
 
 // RedirectStandard changes the destination for normal (non-trace) logsDestinationSetting argument
