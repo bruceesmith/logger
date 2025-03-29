@@ -215,7 +215,7 @@ func TestLevel(t *testing.T) {
 		{
 			name: "trace",
 			lev:  LevelTrace,
-			want: "DEBUG-6",
+			want: "TRACE",
 		},
 	}
 	for _, tt := range tests {
