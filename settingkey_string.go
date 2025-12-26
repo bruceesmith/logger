@@ -18,8 +18,9 @@ const _SettingKey_name = "DestinationSettingFormatSettingOmitTimeSetting"
 var _SettingKey_index = [...]uint8{0, 18, 31, 46}
 
 func (i SettingKey) String() string {
-	if i < 0 || i >= SettingKey(len(_SettingKey_index)-1) {
+	idx := int(i) - 0
+	if i < 0 || idx >= len(_SettingKey_index)-1 {
 		return "SettingKey(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _SettingKey_name[_SettingKey_index[i]:_SettingKey_index[i+1]]
+	return _SettingKey_name[_SettingKey_index[idx]:_SettingKey_index[idx+1]]
 }

@@ -17,8 +17,9 @@ const _LogID_name = "NormTracy"
 var _LogID_index = [...]uint8{0, 4, 9}
 
 func (i LogID) String() string {
-	if i < 0 || i >= LogID(len(_LogID_index)-1) {
+	idx := int(i) - 0
+	if i < 0 || idx >= len(_LogID_index)-1 {
 		return "LogID(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _LogID_name[_LogID_index[i]:_LogID_index[i+1]]
+	return _LogID_name[_LogID_index[idx]:_LogID_index[idx+1]]
 }
