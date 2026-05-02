@@ -3,13 +3,14 @@ module github.com/bruceesmith/logger
 go 1.26
 
 require (
-	github.com/deckarep/golang-set/v2 v2.8.0
-	github.com/urfave/cli/v3 v3.7.0
+	github.com/deckarep/golang-set/v2 v2.9.0
+	github.com/urfave/cli/v3 v3.8.0
 )
 
 require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/gojp/goreportcard v0.0.0-20260302084821-2ae51f4baa2e // indirect
+	go.mongodb.org/mongo-driver v1.17.9 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20260312153236-7ab1446f8b90 // indirect
 	golang.org/x/mod v0.34.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
