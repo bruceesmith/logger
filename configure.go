@@ -9,8 +9,8 @@ import (
 	set "github.com/deckarep/golang-set/v2"
 )
 
-//go:generate go tool stringer -type LogID
-//go:generate go tool stringer -type SettingKey
+//go:generate go tool -modfile=tools/go.mod stringer -type LogID
+//go:generate go tool -modfile=tools/go.mod stringer -type SettingKey
 
 // loggerConfig is the modifiable settings of a logger
 type loggerConfig struct {
